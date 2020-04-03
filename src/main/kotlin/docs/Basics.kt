@@ -1,98 +1,91 @@
 package docs
 
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.*
 
-
-
-fun main(args: Array<String>) {
-
-//    runBlocking {
-//        launch {
-//            basicsExampleSuspendfun()
-//        }
-//        println("Hello")
-//    }
-    coroutinesARE()
-
+fun main() {
+    coroutineScope()
 }
 
-fun coroutinesARE() {
-//    runBlocking {
-//        repeat(100_000){
-//            launch {
-//                delay(1000L)
-//                println(".")
-//            }
-//        }
-//    }
-    runBlocking {
-
-        GlobalScope.launch {
-            repeat(1000) {
-                println("I'm sleeping $it")
-                delay(500L)
-            }
-        }
-        delay(1300L)
-    }
-
-}
-
-suspend fun basicsExampleSuspendfun(){
-    delay(1000L)
-    println("world")
-}
 
 /**
- *          runblocking is not suspend fun
- *          coroutineScope is suspend fun
+ *
+ *      main function is turned into coroutine by using runblocking
  */
 
-fun basicsExampleThree() = runBlocking {
-    launch {
-        delay(200L)
-        println(" Task from runBlocking")
+//fun main() = runBlocking {
+//    GlobalScope.launch {
+//        delay(1000L)
+//        println("World")
+//    }
+//
+//    println("Hello")
+//    delay(2000L)
+//}
+
+fun bridging(){
+    GlobalScope.launch {
+        delay(1000L)
+        println("World!!")
     }
 
+    println("Hello")
 
-    coroutineScope {
+    runBlocking {
+        delay(2000L)
+    }
 
+    println("Gong")
+
+//    Thread.currentThread().interrupt()
+}
+
+fun waitingJob() {
+    runBlocking {
+        val job = GlobalScope.launch {
+            delay(1000L)
+            println("World")
+        }
+        println("Hello")
+        job.join()
+    }
+}
+
+fun runBlockingLaunch(){
+    runBlocking {
         launch {
-            delay(500L)
-            println("Task from nested launch")
+            delay(1000L)
+            println("World")
+        }
+        println("Hello")
+    }
+}
+
+fun coroutineScope(){
+    runBlocking {
+        launch {
+            delay(200L)
+            println("Task From runBlocking")
         }
 
-        delay(100L)
-        println("Task from coroutine scope")
-    }
+        coroutineScope {
+            launch {
+                delay(500L)
+                println("Task From launch")
+            }
 
-    println(" Coroutine scope is over")
+            delay(100L)
+            println("Task from coroutine scope" +
+                    "")
+        }
+        println("Coroutine scope is over")
+    }
 }
 
-
-fun basicsExampleTwo() = runBlocking {
-    launch {
-        delay(1000L)
-        println("World")
-    }
-    println("Hello")
-}
-
-fun basicsExampleOne() = runBlocking {
-    /**
-     *  Global scope is used to launch top-level coroutines which are operating on the whole application lifetime and are not cancelled prematurely.
-     */
-    val job = GlobalScope.launch {
-        delay(1000L)
-        println("world")
-    }
-
-    println("hello")
-    job.join()
-
-//    Thread.sleep(2000L)
-
-//    runBlocking {
-//        delay(2000L)
-//    }
+suspend fun doWorld(){
+    delay(1000L)
+    println("World")
 }
