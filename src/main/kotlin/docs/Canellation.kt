@@ -1,151 +1,129 @@
 package docs
 
+import com.sun.scenario.effect.impl.sw.sse.SSEBlend_SRC_OUTPeer
 import kotlinx.coroutines.*
 
 fun main(args: Array<String>){
-    withTimeOutOrNull()
+    timeOut()
 }
 
-fun cancellingCoroutineExecution(){
+fun cancellationAndTimeout() {
+
     runBlocking {
-      val job = launch {
-          repeat(1000) {
-              println("job : I'm sleeping $it")
-              delay(500L)
-          }
-      }
-        delay(1300L)
-        println(" main: waiting stop")
+        val job = launch {
+            repeat(1000) {
+                println("job: I'm sleeping   $it  ")
+                delay(500L)
+            }
+        }
+
+        delay(900L)
+        println("main i'm tried of waiting !!")
         job.cancel()
+        println("cancle")
         job.join()
-        println(" main : stop")
+        println("main : Now I can quit")
+    }
+
+}
+
+fun cancellationIsCooperative() {
+    runBlocking {
+        val startTime = System.currentTimeMillis()
+
+        val job = launch(Dispatchers.Default) {
+            var nextPrintTime = startTime
+            var i = 0
+
+            while ( i < 5 ){
+                if (System.currentTimeMillis() > nextPrintTime) {
+                    println(" job : I'm sleeping ${i++}")
+                    nextPrintTime += 500L
+                }
+            }
+
+        }
+
+        delay(1300L)
+        println("main: I'm tried of waiting!")
+        job.cancelAndJoin()
+        println("main: Now I can quit")
     }
 }
 
-
-/**
- *          if a coroutine is working in a computation and does not check for cancellation, then it cannot be cancelled,
- *
- */
-fun cancellationCooperativeInWoring(){
+fun makingComputationCode() {
     runBlocking {
         val startTime = System.currentTimeMillis()
-        val job = launch (Dispatchers.Default){
+        val job = launch(Dispatchers.Default) {
             var nextPrintTime = startTime
             var i = 0
-            while( i < 5){
-                if (System.currentTimeMillis() >= nextPrintTime){
-                    println(" job i'm sleeping ${i++}")
+            while(isActive) {
+                if (System.currentTimeMillis() > nextPrintTime) {
+                    println(" job : I'm sleeping ${i++}")
                     nextPrintTime += 500L
                 }
             }
         }
 
         delay(1300L)
-        println(" main: waiting stop ")
+        println("main: I'm tired of wating")
         job.cancelAndJoin()
-        println(" main : stop")
-
-    }
-
-}
-
-fun makingComputationCacellable(){
-    runBlocking {
-        val startTime = System.currentTimeMillis()
-        val job = launch(Dispatchers.Default){
-            var nextPrintTime = startTime
-            var i = 0
-            while (isActive){
-                if (System.currentTimeMillis() >= nextPrintTime){
-                    println(" job i'm sleeping ${i++}")
-                    nextPrintTime += 500L
-                }
-            }
-        }
-        delay(1300L)
-        println(" main: waiting stop ")
-        job.cancelAndJoin()
-        println(" main : stop")
+        println("main: Now I can quit")
     }
 }
 
-
-/**
- *  Cancellable suspending functions throw CancellationException on cancellation
- *
- */
-fun cancellingWithFinally(){
-    runBlocking {
-
-       val job = launch {
-            try {
-                repeat(1000) {
-                    println(" job i'm sleeping $it")
-                    delay(500L)
-                }
-            }catch (e: Exception){
-                println(" job : i'm Exception ")
-            }finally {
-                println(" job : i'm running finally ")
-            }
-
-        }
-
-        delay(1300L)
-        println(" main: waiting stop ")
-        job.cancelAndJoin()
-        println(" main : stop")
-    }
-}
-
-// cancel 된 코루틴 에서 corountine이 필요한 경우
-
-fun runNonCancellableBlock(){
+fun closingResourcesWithFinally(){
     runBlocking {
         val job = launch {
             try {
-                repeat(1000){
-                    println("job : i'm sleeping $it ....  ")
+                repeat(1000) {
+                    println("job : I'm sleeping $it")
                     delay(500L)
                 }
-            }finally {
-                withContext(NonCancellable){
-                    println("job : I'm running finally ")
-                    delay(1000L)
-                    println(" job : And I've just delayed for 1 sec because i'm non-cancellable ")
-                }
-
+            } catch (e: CancellationException){
+                println("Catch")
+            }
+            finally {
+                println("job : I'm running finally")
             }
         }
-
         delay(1300L)
-        println(" main: waiting stop ")
+        println("main: I'm tired of waiting")
         job.cancelAndJoin()
-        println(" main : stop")
+        println("main: Now I can quit")
+    }
+}
+
+fun runNonCancellableBlock (){
+    runBlocking {
+        val job = launch {
+            try {
+                repeat(1000) {
+                    println("job: I'm sleeping $it")
+                    delay(500L)
+                }
+            } finally {
+                withContext(NonCancellable) {
+                    println("job: I'm running finally")
+                    delay(1000L)
+                    println("job: And I've just delayed for 1 sec because I'm non-cancellable")
+                }
+            }
+        }
+        delay(1300L)
+        println("main : I'tried of wating")
+        job.cancelAndJoin()
+        println("main : Now I can quit")
     }
 }
 
 fun timeOut(){
     runBlocking {
-        withTimeout(1300L){
-            repeat(1000){
-                println(" I'm sleeping $it  ")
-                delay(500L)
-            }
-        }
-    }
-}
-
-fun withTimeOutOrNull(){
-    runBlocking {
-        val result = withTimeoutOrNull(1300L){
+        withTimeout(1300L) {
             repeat(1000) {
-                println(" I'm sleeping $it")
+                println("I'm sleeping $it")
                 delay(500L)
             }
-            "Done"
         }
-        println(" Result is $result  ")
     }
 }
