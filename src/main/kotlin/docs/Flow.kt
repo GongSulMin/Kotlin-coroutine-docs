@@ -1,157 +1,352 @@
 package docs
 
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.runBlocking
+import java.lang.Exception
+import kotlin.concurrent.fixedRateTimer
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.system.measureTimeMillis
+
+fun main() {
+
+    catchingDeclaratively()
 
 
-fun main(args: Array<String>) {
-    runBlocking<Unit> {
-        flowsAreSqeuential()
-    }
-}
+    runBlocking {
 
-/**
- *
- *         this computation blocks the main thread
- */
-//fun foo(): Sequence<Int> = sequence {
-//    for (i in 1..3) {
-//        Thread.sleep(100)
-//        yield(i)
-//    }
-//}
+//        (1..3).asFlow().map {
+//            flatteningFlow(it)
+//        }
 
 
-//suspend fun foo(): List<Int> {
-//    delay(1000)
-//    return listOf(1,2,3)
-//}
 
-fun foo(): Flow<Int> = flow {
 
-    /**
-     *          Flows are cold Main
-     *
-     */
-//    runBlocking {
-//        println(" Calling foo .... ")
-//        val flow = foo()
-//        println(" Calling collect ....")
-//        foo().collect { value -> println(value)}
-//        println(" Calling collect again..... ? ")
-//        foo().collect { value -> println(value)}
-//    }
-
-//    runBlocking {
-//        launch {
-//            for (k in 1..3) {
-//                println(" I'm not blocked $k ")
-//                delay(100)
+//        val time = measureTimeMillis {
+//            foo().collectLatest { value -> // 취소 & 재시작
+//                println("Collecting $value")
+//                delay(300) // 처리하는 척
+//                println("Done $value")
 //            }
 //        }
-//        foo().collect { value -> println(value)}
+//        val time = measureTimeMillis {
+//            buffering()
+//                .conflate() // conflate emissions, don't process each one
+//                .collect { value ->
+//                    delay(300) // pretend we are processing it for 300 ms
+//                    println(value)
+//                }
+//        }
+//        println("Collected in $time ms")
+    }
+
+
+//
+//    runBlocking {
+//        val time = measureTimeMillis {
+//            buffering()
+//                .buffer()
+//                .collect {
+//                delay(300)
+//                println(it)
+//            }
+//        }
+//
+//        println(" Collected in  $time ms")
 //    }
 
-    println(" Flow started ")
-    for (i in 1..3){
-        delay(100)
-        emit(i)
-    }
-}
-
-fun flowCancellation(): Flow<Int> = flow {
-
-    /**
-     *  Main
-     *
-     */
 //    runBlocking {
-//        withTimeoutOrNull(400) {
-//            flowCancellation().collect { value -> println(value) }
+//        flowOnOperator().collect {
+//            log("Collected $it")
 //        }
 //    }
-//    println(" Done ")
 
-    for (i in 1..3){
-        delay(100)
-        println("emitting $i")
-        emit(i)
+//    runBlocking(Dispatchers.Default) {
+//        wrongEmissionWithContext().collect{
+//            println(it)
+//        }
+//    }
+
+//    runBlocking {
+//        flowContext().collect {
+//            log("colledted  $it")
+//        }
+//    }
+
+//    (1..5)
+//        .filter {
+//            println("Filter $it")
+//            it % 2 == 0
+//        }
+//        .map {
+//            println("Map $it")
+//            "string $it"
+//        }
+//
+//    println("---------------------------")
+//
+//
+//    runBlocking {
+//        flowAreSequential()
+//    }
+
+
+//
+//    runBlocking {
+//        sizeLimitOperator()
+//            .take(2)
+//            .collect {
+//                println(it)
+//            }
+//    }
+
+
+
+
+//    runBlocking {
+//        (1..3).asFlow()
+//            .transform {
+//                request ->
+//                emit("Making request $request")
+//                emit(performRequest(request))
+//            }
+//            .collect {
+//                println(it)
+//            }
+//    }
+
+
+
+
+//    runBlocking<Unit> {
+//        (1..3).asFlow()
+//            .map { request -> performRequest(request) }
+//            .collect { response -> println(response) }
+//    }
+
+
+}
+
+
+
+
+fun representMultipleValue(){
+    val list = listOf<Int>(1,2,3)
+
+    list.forEach {
+        println(it)
     }
 }
 
-fun flowBuilders() {
-    runBlocking {
-        (1..3).asFlow().collect { value -> println(value) }
+fun sequence(): Sequence<Int> {
+    return sequence {
+        for (i in 1..3) {
+            Thread.sleep(1000)
+            yield(i)
+        }
     }
 }
 
-suspend fun intermediateFlowOperator(request: Int): String {
-    /**
-     *                    (1..3).asFlow()
-                                .map { request -> intermediateFlowOperator(request) }
-                                .collect { reponse -> println(reponse) }
-     *
-     */
+suspend fun suspendingFunction():List<Int> {
+    delay(5000)
+    return listOf<Int>(1 , 2, 3)
+}
 
-    // error
-    delay(1000)
-    return "response $request"
+fun flows(): Flow<Int> {
+    return flow {
+        for (i in 1..3) {
+            delay(100)
+            emit(i)
+        }
+    }
+
+}
+
+fun flowAreCold(): Flow<Int> {
+    println("flow start")
+    return flow {
+        for (i in 1..3) {
+            delay(100)
+            emit(i)
+        }
+    }
+}
+
+fun flowCancellation(): Flow<Int> {
+    return flow{
+        for (i in 1..3){
+            delay(100)
+            println("Emitting $i")
+            emit(i)
+        }
+    }
 }
 
 suspend fun performRequest(request: Int): String {
-
-    /**
-     *
-     *                       (1..3).asFlow()
-                                    .transform {
-                                        request ->
-                                            emit(" Making request $request")
-                                            emit(performRequest(request))
-                                    }
-                                        .collect { println(it) }
-     *
-     */
-    delay(1000)
-    return "reponse $request "
+    return "response $request"
 }
 
-
-fun sizeLimitOperstor(): Flow<Int> = flow {
-
-
-//    sizeLimitOperstor()
-//        .take(2)
-//        .collect { value -> println(value) }
-    try {
-        emit(1)
-        emit(2)
-        println(" This line will not execute")
-        emit(3)
-    }finally {
-        println(" Finally in numbers ")
+fun sizeLimitOperator (): Flow<Int> {
+    return flow {
+        try {
+            emit(1)
+            emit(2)
+            println(" not executed this line")
+            emit(3)
+        } finally {
+            println("Finally in numbers")
+        }
     }
+
 }
 
-suspend fun reduce(){
-    val sum = (1..5).asFlow()
-        .map{ it * it}
-        .reduce { a, b ->  a + b}
-    println(sum)
-}
-
-suspend fun flowsAreSqeuential() {
+suspend fun flowAreSequential(){
     (1..5).asFlow()
-        .filter{
-            println(" Filter $it")
+        .filter {
+            println("Filter $it")
             it % 2 == 0
         }
         .map {
-            println(" Map $it ")
-            "String $it"
+            println("Map $it")
+            "string $it"
         }
         .collect {
-            println(" Collect $it ")
+            println("Colleect $it")
         }
 }
 
+fun flowContext(): Flow<Int> {
+    return flow {
+
+        log(" Started flow ")
+
+        for (i in 1..3) {
+            emit(i)
+        }
+    }
+}
+
+fun wrongEmissionWithContext(): Flow<Int> {
+    return flow {
+        kotlinx.coroutines.withContext(Dispatchers.Default) {
+            for (i in 1..3) {
+                Thread.sleep(100)
+                emit(i)
+            }
+        }
+    }
+
+}
+
+fun flowOnOperator(): Flow<Int> {
+    return flow {
+        for (i in 1..3){
+            Thread.sleep(100)
+            log("Emitting $i")
+            emit(i)
+        }
+    }.flowOn(Dispatchers.Default)
+}
+
+fun buffering(): Flow<Int> {
+    return flow {
+        for (i in 1..3) {
+            emit(i)
+        }
+    }
+}
+
+
+fun foo(): Flow<Int> = flow {
+    for (i in 1..3) {
+        println("Emitting $i")
+        emit(i) // emit next value
+    }
+}
+
+fun zip() {
+    runBlocking {
+        val nums = (1..3).asFlow()
+
+        val strs = flowOf("one" , "two" , "three")
+
+        nums.zip(strs) { a, b ->
+            "$a -> $b"
+        }
+            .collect {
+                println(it)
+            }
+    }
+
+
+}
+
+fun flatteningFlow(i: Int): Flow<String>{
+    return flow {
+        emit("$i : Fisrt")
+        delay(500)
+        emit(" $i: Seconde")
+    }
+}
+
+fun collectorTryCatch() {
+    runBlocking {
+        try {
+            foo().collect {
+                println(it)
+                check(it <= 1) {
+                    "Collected $it"
+                }
+            }
+
+        } catch (e: Throwable) {
+            println("Caught $e")
+        }
+    }
+
+}
+
+fun everyThingIsCaught(): Flow<String> {
+    return flow {
+        for (i in 1..3) {
+            println("Emitting $i")
+            emit(i)
+        }
+    }
+        .map {
+            check(it <= 1) {
+                "Crashed on $it"
+            }
+            "string $it"
+        }
+
+}
+
+fun exceptionTransparency() {
+
+    runBlocking {
+        foo()
+            .catch { e -> println("Caught $e ") }
+            .collect {
+                check(it <= 1) {
+                    " Collected $it "
+                }
+                println(it)
+            }
+    }
+
+}
+
+fun catchingDeclaratively() {
+    runBlocking {
+        foo()
+            .onEach {
+                check(it <= 1) {
+                    "Collected $it"
+                }
+                println(it)
+            }
+            .catch { e -> println("Caufht $e") }
+            .collect()
+    }
+}
